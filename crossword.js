@@ -10,16 +10,38 @@ input.words.forEach((word) => {
     words.push({ word: word.replace(/ /g, "-"), length: word.length, placed: false });
 });
 
-console.log("Note that words above 18 characters will be deleted")
-words = words.filter((index) => index.word.length < 18)
+console.log("Note that words above " + Number(gridSize - 2) + " characters will be deleted")
+words = words.filter((index) => index.word.length < gridSize - 2)
 console.log("There are " + words.length + " words left")
 console.log(words)
-let pastWords = words
+let pastWords = []
 
 const printGrid = () => {
     for (let i = 0; i < crossword.length; i++) {
         console.log(crossword[i].join(" "));
     }
+}
+
+const isFree = (newWord, coords) => {
+    //Check if the coords given ever intersect with another word return false if it does
+    let x = coords[0];
+    let y = coords[1];
+    let direction = coords[2];
+    let wordLength = newWord.length;
+    if (direction === "across") {
+        for (let i = 0; i < wordLength; i++) {
+            if (crossword[y][x + i] !== "." && crossword[y][x + i] !== newWord.charAt(i)) {
+                return false;
+            }
+        }
+    } else {
+        for (let i = 0; i < wordLength; i++) {
+            if (crossword[y + i][x] !== "." && crossword[y + i][x] !== newWord.charAt(i)) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 const placeWord = (wordIndex, coords) => {
@@ -39,64 +61,76 @@ const placeWord = (wordIndex, coords) => {
         }
         words[wordIndex] = { ...words[wordIndex], placed: true, direction: "down", xPos: x, yPos: y }
     }
-    let tempArr = []
+
+    let tempArr = pastWords
     for (let i = 0; i < words.length; i++) {
         if (wordIndex === i) {
             tempArr.push(words[i])
         }
     }
     pastWords = tempArr
-    console.log(pastWords)
 }
 
-const findWord = (initialWordIndex) => {
-    console.log("Searching for words with matching letters")
+const findWord = () => {
     let matches = []
-    for (let i = 0; i < words.length; i++) {
-        for (let j = 0; j < words[initialWordIndex].word.length; j++) {
-            if (!pastWords.includes(words[i])) {
-                let pos = words[i].word.search(words[initialWordIndex].word.charAt(j))
-                if (pos > -1) {
-                    if (words[initialWordIndex].direction == "across") {
-                        if (words[initialWordIndex].yPos + words[i].word.length-1 - pos > gridSize - 1 || words[initialWordIndex].yPos - pos < 0) {
+    for (let index = 0; index < pastWords.length; index++) {
+        for (let i = 0; i < words.length; i++) {
+            for (let j = 0; j < pastWords[index].word.length; j++) {
+                if (!pastWords.includes(words[i])) {
+                    let pos = words[i].word.search(pastWords[index].word.charAt(j))
+                    if (pos > -1) {
+                        if (pastWords[index].direction == "across") {
+                            if (pastWords[index].yPos + words[i].word.length - 1 - pos > gridSize - 1 || pastWords[index].yPos - pos < 0) {
+                            } else {
+                                if (isFree(words[i].word, [pastWords[index].xPos + j, pastWords[index].yPos - pos, "down"]))
+                                    matches.push({ word: words[i].word, newWordIndex: i, posNew: pos, posInit: j, letter: pastWords[index].word.charAt(j), wordIndex: index })
+                            }
                         } else {
-                            matches.push({ word: words[i].word, newWordIndex: i, posNew: pos, posInit: j, letter: words[initialWordIndex].word.charAt(j) })
-                        }
-                    } else {
+                            if (pastWords[index].xPos + words[i].word.length - 1 - pos > gridSize - 1 || pastWords[index].xPos - pos < 0) {
+                            } else {
+                                if (isFree(words[i].word, [pastWords[index].xPos - pos, pastWords[index].yPos + j, "across"])) {
+                                    matches.push({ word: words[i].word, newWordIndex: i, posNew: pos, posInit: j, letter: pastWords[index].word.charAt(j), wordIndex: index })
+                                }
+                            }
 
+                        }
                     }
-                    
                 }
             }
         }
     }
-    return { wordIndex: initialWordIndex, found: matches[Math.floor(Math.random() * matches.length)] }
-    //return { wordIndex: initialWordIndex, found: matches[7] }
+    return matches[Math.floor(Math.random() * matches.length)]
 }
 
-const foundHandler = (initialWordIndex) => {
-    let find = findWord(initialWordIndex)
-    console.log(find)
-    console.log("Initial word: ")
-    console.log(words[find.wordIndex])
-    if (words[find.wordIndex].direction == "across") {
-        placeWord(find.found.newWordIndex, [find.found.posInit + words[find.wordIndex].xPos, words[find.wordIndex].yPos - find.found.posNew, "down"])
+const findAndPlace = () => {
+    let find = findWord()
+    if (find === undefined) {
+        return true
+    }
+    if (pastWords[find.wordIndex].direction == "across") {
+        placeWord(find.newWordIndex, [find.posInit + pastWords[find.wordIndex].xPos, pastWords[find.wordIndex].yPos - find.posNew, "down"])
     } else {
-
+        placeWord(find.newWordIndex, [pastWords[find.wordIndex].xPos - find.posNew, pastWords[find.wordIndex].yPos + find.posInit, "across"])
     }
-
+    return false
 }
-
 var crossword = Array(gridSize)
-for (let i = 0; i < crossword.length; i++) {
-    crossword[i] = Array(gridSize)
-    for (let j = 0; j < crossword[i].length; j++) {
-        crossword[i][j] = ".";
+const createCrossword = () => {
+    for (let i = 0; i < crossword.length; i++) {
+        crossword[i] = Array(gridSize)
+        for (let j = 0; j < crossword[i].length; j++) {
+            crossword[i][j] = ".";
+        }
     }
+    placeWord(0, [Math.floor(gridSize / 2) - Math.floor(words[0].length / 2), Math.ceil(gridSize / 2), "across"]);
+    let exit = false
+    while (!exit) {
+        exit = findAndPlace()
+    }
+    printGrid()
 }
-console.log("Laying first word...")
-//The placement should be adjusted to the length of the word so it sits in the middle of the grid
-placeWord(0, [Math.floor(gridSize / 2) - Math.floor(words[0].length / 2), Math.ceil(gridSize/2), "across"]);
-foundHandler(0)
-printGrid()
+
+createCrossword()
+
+
 
