@@ -1,14 +1,13 @@
-function getStrongCrossword(gridSize, invocations, amountCrosswords) {
+function getStrongCrossword(gridSize, invocations, input) {
 
     console.log("Creating crosswords...");
-    var input = require('./words.json');
     input.words.sort((a, b) => {
         return b.length - a.length;
     });
     console.log('There are ' + input.words.length + ' words in the input file.');
     var words = [];
     input.words.forEach((word) => {
-        words.push({ word: word.replace(/ /g, "-"), length: word.length, placed: false });
+        words.push({ word: word.replace(/ /g, "-"), length: word.length });
     });
 
     console.log("Note that words above " + Number(gridSize - 2) + " characters will be deleted")
@@ -23,6 +22,7 @@ function getStrongCrossword(gridSize, invocations, amountCrosswords) {
     const getCrossword = () => {
         let pastWords = []
         var score = 0
+        let wordPlacements = []
 
         const isFree = (newWord, coords) => {
             let x = coords[0];
@@ -55,12 +55,12 @@ function getStrongCrossword(gridSize, invocations, amountCrosswords) {
                 for (let i = 0; i < wordLength; i++) {
                     crossword[y][x + i] = wordArray[i];
                 }
-                words[wordIndex] = { ...words[wordIndex], placed: true, direction: "across", xPos: x, yPos: y }
+                words[wordIndex] = { ...words[wordIndex], direction: "across", xPos: x, yPos: y }
             } else {
                 for (let i = 0; i < wordLength; i++) {
                     crossword[y + i][x] = wordArray[i];
                 }
-                words[wordIndex] = { ...words[wordIndex], placed: true, direction: "down", xPos: x, yPos: y }
+                words[wordIndex] = { ...words[wordIndex], direction: "down", xPos: x, yPos: y }
             }
 
             let tempArr = pastWords
@@ -110,8 +110,10 @@ function getStrongCrossword(gridSize, invocations, amountCrosswords) {
                 return true
             }
             if (pastWords[find.wordIndex].direction == "across") {
+                wordPlacements.push({word: words[find.newWordIndex], pos: [find.posInit + pastWords[find.wordIndex].xPos, pastWords[find.wordIndex].yPos - find.posNew, "down"]})
                 placeWord(find.newWordIndex, [find.posInit + pastWords[find.wordIndex].xPos, pastWords[find.wordIndex].yPos - find.posNew, "down"])
             } else {
+                wordPlacements.push({word: words[find.newWordIndex], pos: [pastWords[find.wordIndex].xPos - find.posNew, pastWords[find.wordIndex].yPos + find.posInit, "across"]})
                 placeWord(find.newWordIndex, [pastWords[find.wordIndex].xPos - find.posNew, pastWords[find.wordIndex].yPos + find.posInit, "across"])
             }
             return false
@@ -129,7 +131,7 @@ function getStrongCrossword(gridSize, invocations, amountCrosswords) {
             while (!exit) {
                 exit = findAndPlace()
             }
-            return { crossword: crossword, score: score }
+            return { crossword: crossword, score: score, wordPlacements: wordPlacements }
         }
         return buildCrossword()
     }
@@ -156,7 +158,7 @@ function getStrongCrossword(gridSize, invocations, amountCrosswords) {
         }
 
         crosswordCollection = quicksort(crosswordCollection)
-        return crosswordCollection.slice(0, amountCrosswords)
+        return crosswordCollection[0]
     }
 
     return getBestCrossword(invocations)
@@ -169,5 +171,29 @@ var printGrid = (grid, score) => {
     }
 }
 
-let crosswords = getStrongCrossword(15, 5, 3)
-printGrid(crosswords[0].crossword, crosswords[0].score)
+let crossword = getStrongCrossword(15, 10, {
+    "words": [
+        "tiger",
+        "bird",
+        "banana",
+        "laptop",
+        "java code",
+        "principal",
+        "student",
+        "watch",
+        "mouse",
+        "keyboard",
+        "teacher",
+        "water",
+        "mantle",
+        "pencil",
+        "sneakers",
+        "socks",
+        "hydration",
+        "water bottles",
+        "backpack",
+        "united states of america"
+    ]
+})
+printGrid(crossword.crossword, crossword.score)
+console.log(crossword.wordPlacements)
