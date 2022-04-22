@@ -110,10 +110,10 @@ function getStrongCrossword(gridSize, invocations, input) {
                 return true
             }
             if (pastWords[find.wordIndex].direction == "across") {
-                wordPlacements.push({word: words[find.newWordIndex], pos: [find.posInit + pastWords[find.wordIndex].xPos, pastWords[find.wordIndex].yPos - find.posNew, "down"]})
+                wordPlacements.push({word: {word: words[find.newWordIndex].word, length: words[find.newWordIndex].length}, pos: {x: find.posInit + pastWords[find.wordIndex].xPos, y: pastWords[find.wordIndex].yPos - find.posNew, dir: "down"}})
                 placeWord(find.newWordIndex, [find.posInit + pastWords[find.wordIndex].xPos, pastWords[find.wordIndex].yPos - find.posNew, "down"])
             } else {
-                wordPlacements.push({word: words[find.newWordIndex], pos: [pastWords[find.wordIndex].xPos - find.posNew, pastWords[find.wordIndex].yPos + find.posInit, "across"]})
+                wordPlacements.push({word: {word: words[find.newWordIndex].word, length: words[find.newWordIndex].length}, pos: {x: pastWords[find.wordIndex].xPos - find.posNew, y: pastWords[find.wordIndex].yPos + find.posInit, dir: "across"}})
                 placeWord(find.newWordIndex, [pastWords[find.wordIndex].xPos - find.posNew, pastWords[find.wordIndex].yPos + find.posInit, "across"])
             }
             return false
@@ -171,7 +171,7 @@ var printGrid = (grid, score) => {
     }
 }
 
-let crossword = getStrongCrossword(15, 10, {
+let crossword = getStrongCrossword(20, 10, {
     "words": [
         "tiger",
         "bird",
