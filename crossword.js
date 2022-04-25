@@ -126,6 +126,7 @@ function getStrongCrossword(gridSize, invocations, input) {
                     crossword[i][j] = ".";
                 }
             }
+            wordPlacements.push({word: {word: words[0].word, length: words[0].length}, pos: {x: Math.floor(gridSize / 2) - Math.floor(words[0].length / 2), y: Math.ceil(gridSize / 2), dir: "across"}})
             placeWord(0, [Math.floor(gridSize / 2) - Math.floor(words[0].length / 2), Math.ceil(gridSize / 2), "across"]);
             let exit = false
             while (!exit) {
@@ -195,5 +196,6 @@ let crossword = getStrongCrossword(20, 10, {
         "united states of america"
     ]
 })
+
 printGrid(crossword.crossword, crossword.score)
 console.log(crossword.wordPlacements)
